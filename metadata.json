@@ -1,0 +1,6 @@
+{
+  "name": "Draft 90",
+  "description": "Historical football squad draft game with knockout tournaments from Round of 16 to the Grand Final.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

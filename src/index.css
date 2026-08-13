@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #0b0f19;
+    color: #f1f5f9;
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: 'Oswald', 'Space Grotesk', sans-serif;
+    letter-spacing: 0.02em;
+  }
+}
+
+/* Custom dark retro theme styles for Draft 90 */
+.bg-dark-canvas {
+  background-color: #0b0f19;
+}
+
+.bg-dark-card {
+  background-color: #121826;
+}
+
+.bg-dark-surface {
+  background-color: #182234;
+}
+
+.border-dark-retro {
+  border: 2px solid #283754;
+}
+
+.shadow-dark-retro {
+  box-shadow: 3px 3px 0px #030712;
+}
+
+.shadow-dark-retro-lg {
+  box-shadow: 5px 5px 0px #030712;
+}
+
+/* Tactical Pitch Dark Grass Gradient */
+.pitch-bg {
+  background: 
+    repeating-linear-gradient(
+      0deg,
+      #0d2b1a,
+      #0d2b1a 36px,
+      #081f13 36px,
+      #081f13 72px
+    );
+}
+
+/* Custom Dark Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ef4444;
+}
+
+@keyframes pulseTarget {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+.animate-target {
+  animation: pulseTarget 1.5s infinite;
+}
+
