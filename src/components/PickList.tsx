@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { RefreshCw, Check, Dices, Sparkles } from 'lucide-react';
+import { RefreshCw, Check, Dices, Sparkles, Calendar, Shield } from 'lucide-react';
 import { Team, Player, SlotConfig } from '../types';
 import { sound } from '../utils/audio';
+import { TeamRoulette } from './TeamRoulette';
 
 interface PickListProps {
   currentTeam: Team | null;
@@ -32,7 +33,11 @@ export const PickList: React.FC<PickListProps> = ({
   placedPlayers,
   onSimulateTournament,
 }) => {
-  const [isRolling, setIsRolling] = useState(false);
+  const [rouletteState, setRouletteState] = useState<{
+    active: boolean;
+    type: 'full' | 'year' | 'club';
+    targetTeam?: Team;
+  }>({ active: false, type: 'full' });
 
   const totalPlaced = placedPlayers.filter(Boolean).length;
   const isDraftComplete = totalPlaced === 11;
@@ -49,46 +54,47 @@ export const PickList: React.FC<PickListProps> = ({
   };
 
   const handleRollDice = () => {
-    if (isRolling || isDraftComplete) return;
+    if (rouletteState.active || isDraftComplete) return;
     sound.playClick();
-    setIsRolling(true);
-    setTimeout(() => {
-      onRollDiceForPick();
-      setIsRolling(false);
-    }, 450);
+    onRollDiceForPick();
+    setRouletteState({ active: true, type: 'full' });
   };
 
-  const handleReRollWithDice = () => {
-    if (reRollsLeft <= 0 || isRolling || isDraftComplete) return;
+  const handleReRollClubAction = () => {
+    if (reRollsLeft <= 0 || rouletteState.active || isDraftComplete) return;
     sound.playClick();
-    setIsRolling(true);
-    setTimeout(() => {
-      onReRollTeam();
-      setIsRolling(false);
-    }, 450);
+    onReRollTeam();
+    setRouletteState({ active: true, type: 'club' });
+  };
+
+  const handleReRollYearAction = () => {
+    if (reRollsLeft <= 0 || rouletteState.active || isDraftComplete) return;
+    sound.playClick();
+    onReRollYear();
+    setRouletteState({ active: true, type: 'year' });
   };
 
   // STATE SPECIAL: 11 PLAYERS DRAFTED (COMPLETED)
   if (isDraftComplete) {
     return (
       <div className="flex flex-col gap-4 w-full">
-        <div className="bg-[#121826] border-2 border-emerald-500/50 rounded-xl p-6 shadow-dark-retro flex flex-col items-center justify-center text-center gap-4 relative overflow-hidden">
-          <div className="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="bg-[#082618] border-2 border-emerald-500 rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center text-center gap-4 relative overflow-hidden">
+          <div className="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none" />
 
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono font-black uppercase tracking-widest text-emerald-400 bg-emerald-950/80 border border-emerald-600/50 px-3 py-1 rounded-full">
+            <span className="text-[10px] font-mono font-black uppercase tracking-widest text-emerald-300 bg-[#041c10] border border-emerald-500/60 px-3 py-1 rounded-full shadow-md">
               DRAFT COMPLETADO (11/11)
             </span>
           </div>
 
           <div className="flex flex-col items-center gap-2 my-2">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-800 border-2 border-white flex items-center justify-center shadow-2xl animate-bounce">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-700 border-2 border-white flex items-center justify-center shadow-2xl animate-bounce">
               <span className="text-4xl">⚽</span>
             </div>
             <h2 className="font-display text-2xl font-black text-white uppercase tracking-tight mt-2">
               ¡TU XI TITULAR ESTÁ LISTO!
             </h2>
-            <p className="text-xs font-mono text-gray-300 max-w-xs leading-relaxed">
+            <p className="text-xs font-mono text-emerald-200/90 max-w-xs leading-relaxed">
               Has completado los 11 jugadores. Ya no se puede tirar más el dado. Haz clic para simular el partido de tu torneo.
             </p>
           </div>
@@ -98,7 +104,7 @@ export const PickList: React.FC<PickListProps> = ({
               sound.playClick();
               onSimulateTournament();
             }}
-            className="w-full py-4 px-6 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-display font-black text-base uppercase border-2 border-white shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 cursor-pointer animate-pulse"
+            className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-display font-black text-base uppercase border-2 border-white shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 cursor-pointer animate-pulse"
           >
             <span>🎮 SIMULAR TORNEO / JUGAR PARTIDO</span>
           </button>
@@ -107,46 +113,54 @@ export const PickList: React.FC<PickListProps> = ({
     );
   }
 
-  // STATE A: WAITING FOR DICE ROLL TO REVEAL NEXT TEAM & YEAR
+  // STATE A: ROULETTE IS ACTIVELY SPINNING
+  if (rouletteState.active && currentTeam) {
+    return (
+      <div className="flex flex-col gap-4 w-full">
+        <TeamRoulette
+          targetTeam={currentTeam}
+          type={rouletteState.type}
+          onComplete={() => setRouletteState({ active: false, type: 'full' })}
+        />
+      </div>
+    );
+  }
+
+  // STATE B: WAITING FOR INITIAL DICE ROLL TO REVEAL TEAM
   if (!hasRolledForPick || !currentTeam) {
     return (
       <div className="flex flex-col gap-4 w-full">
-        <div className="bg-[#121826] border-2 border-[#26334d] rounded-xl p-6 shadow-dark-retro flex flex-col items-center justify-center text-center gap-4 relative overflow-hidden">
-          <div className="absolute -top-12 -right-12 w-32 h-32 bg-red-600/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="bg-[#082618] border-2 border-[#145938] rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center text-center gap-4 relative overflow-hidden">
+          <div className="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/15 rounded-full blur-2xl pointer-events-none" />
 
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono font-black uppercase tracking-widest text-amber-400 bg-amber-950/80 border border-amber-600/50 px-3 py-1 rounded-full">
+            <span className="text-[10px] font-mono font-black uppercase tracking-widest text-amber-300 bg-[#041c10] border border-amber-500/50 px-3 py-1 rounded-full shadow-md">
               ELECCIÓN {currentPickNumber} DE 11
             </span>
           </div>
 
           <div className="flex flex-col items-center gap-2 my-2">
-            <div
-              className={`w-20 h-20 rounded-2xl bg-gradient-to-br from-[#ef4444] to-red-800 border-2 border-white flex items-center justify-center shadow-xl transition-all duration-500 ${
-                isRolling ? 'rotate-[360deg] scale-110 shadow-red-500/50' : 'animate-bounce'
-              }`}
-            >
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700 border-2 border-white flex items-center justify-center shadow-xl animate-bounce">
               <Dices className="w-10 h-10 text-white" />
             </div>
             <h2 className="font-display text-2xl font-black text-white uppercase tracking-tight mt-2">
               TIRA EL DADO PARA TU ELECCIÓN {currentPickNumber}
             </h2>
-            <p className="text-xs font-mono text-gray-400 max-w-xs leading-relaxed">
-              Haz clic en el dado para extraer un País o Club aleatorio y su año histórico.
+            <p className="text-xs font-mono text-emerald-200/80 max-w-xs leading-relaxed">
+              Haz clic en el dado para activar la ruleta y extraer un País o Club aleatorio con su año histórico.
             </p>
           </div>
 
           <button
             onClick={handleRollDice}
-            disabled={isRolling}
-            className="w-full py-4 px-6 rounded-xl bg-[#ef4444] hover:bg-red-600 text-white font-display font-black text-base uppercase border-2 border-white shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 cursor-pointer"
+            className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-display font-black text-base uppercase border-2 border-white shadow-[0_4px_20px_rgba(16,185,129,0.4)] transition-all active:scale-95 flex items-center justify-center gap-3 cursor-pointer"
           >
-            <Dices className={`w-6 h-6 ${isRolling ? 'animate-spin' : ''}`} />
-            <span>{isRolling ? 'GIRANDO DADO...' : '🎲 TIRAR DADO (PAÍS/CLUB Y AÑO)'}</span>
+            <Dices className="w-6 h-6 animate-pulse" />
+            <span>🎲 TIRAR DADO (RULETA DE CLUBES)</span>
             <Sparkles className="w-5 h-5 text-amber-300" />
           </button>
 
-          <div className="text-[10px] font-mono text-gray-500">
+          <div className="text-[10px] font-mono text-emerald-300/70">
             Cambiadores de dado disponibles en partida: <span className="text-amber-400 font-bold">{reRollsLeft}/3</span>
           </div>
         </div>
@@ -154,91 +168,93 @@ export const PickList: React.FC<PickListProps> = ({
     );
   }
 
-  // STATE B: TEAM & YEAR REVEALED - USER CHOOSES 1 PLAYER
+  // STATE C: TEAM & YEAR REVEALED - USER CHOOSES 1 PLAYER
   return (
     <div className="flex flex-col gap-4 w-full">
       {/* DRAWN TEAM CARD */}
-      <div className="bg-[#121826] border-2 border-[#26334d] rounded-xl p-5 shadow-dark-retro relative overflow-hidden flex flex-col gap-3">
-        <div className="flex items-center justify-between border-b border-[#26334d] pb-2">
-          <span className="text-[10px] font-black font-display uppercase tracking-widest text-amber-400 flex items-center gap-1.5">
+      <div className="bg-gradient-to-br from-[#082b1c] to-[#041c10] border-2 border-emerald-500/80 rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col gap-3">
+        <div className="flex items-center justify-between border-b border-emerald-700/60 pb-2">
+          <span className="text-[10px] font-black font-display uppercase tracking-widest text-amber-300 flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5" />
             <span>PAÍS/CLUB Y AÑO EXTRAÍDOS (ELECCIÓN {currentPickNumber}/11)</span>
           </span>
-          <span className="text-[10px] font-mono bg-[#ef4444] text-white px-2 py-0.5 rounded font-black">
+          <span className="text-[10px] font-mono bg-emerald-500 text-white px-2.5 py-0.5 rounded-full font-black border border-white/20">
             SÓLO 1 JUGADOR
           </span>
         </div>
 
         <div className="flex items-center justify-between gap-2">
           <div className="flex flex-col">
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl">{currentTeam.flag}</span>
-              <span className="font-mono text-sm font-bold text-gray-400">{currentTeam.shortCode}</span>
+            <div className="flex items-baseline gap-2.5 flex-wrap">
+              <span className="text-3xl drop-shadow">{currentTeam.flag}</span>
+              <span className="font-mono text-xs font-bold text-emerald-400/90">{currentTeam.shortCode}</span>
               <h2 className="font-display text-2xl md:text-3xl font-black text-white leading-none tracking-tight">
                 {currentTeam.name}
               </h2>
             </div>
-            <div className="font-display font-bold text-sm text-[#ef4444] mt-1">
-              <span>{currentTeam.tag}</span>
+            <div className="font-display font-black text-sm text-amber-300 mt-1 flex items-center gap-2">
+              <span className="bg-emerald-950/80 px-2.5 py-0.5 rounded-md border border-emerald-600/60">
+                {currentTeam.tag}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
       {/* RE-ROLL CONTROL BOX (3 TOTAL PER GAME) */}
-      <div className="bg-[#121826] border-2 border-[#26334d] rounded-xl p-3.5 shadow-dark-retro">
+      <div className="bg-[#082618] border-2 border-[#145938] rounded-2xl p-3.5 shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-black font-display uppercase tracking-wider text-gray-400">
-            ¿NO TE GUSTA EL PAÍS/CLUB? ({reRollsLeft} CAMBIOS RESTANTES)
+          <span className="text-[10px] font-black font-display uppercase tracking-wider text-emerald-300/80">
+            ¿NO TE GUSTA EL SORTEO? ({reRollsLeft} CAMBIOS RESTANTES)
           </span>
-          <span className={`text-[10px] font-bold font-mono px-2.5 py-0.5 rounded ${
-            reRollsLeft > 0 ? 'bg-[#ef4444] text-white' : 'bg-gray-700 text-gray-400'
+          <span className={`text-[10px] font-bold font-mono px-2.5 py-0.5 rounded-full ${
+            reRollsLeft > 0 ? 'bg-amber-400 text-black font-black' : 'bg-emerald-950 text-emerald-600'
           }`}>
             {reRollsLeft}/3 DISPONIBLES
           </span>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
+          {/* Change Club/Country: KEEPS the year, changes club/country */}
           <button
-            onClick={handleReRollWithDice}
-            disabled={reRollsLeft <= 0 || isRolling}
-            className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg font-display text-xs font-bold border-2 transition-all uppercase ${
+            onClick={handleReRollClubAction}
+            disabled={reRollsLeft <= 0 || rouletteState.active}
+            className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl font-display text-xs font-black border-2 transition-all uppercase ${
               reRollsLeft > 0
-                ? 'bg-[#ef4444] hover:bg-red-600 text-white border-white cursor-pointer'
-                : 'bg-gray-900 text-gray-600 border-gray-800 cursor-not-allowed'
+                ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black border-white shadow-md cursor-pointer active:scale-95'
+                : 'bg-emerald-950 text-emerald-700 border-emerald-900 cursor-not-allowed'
             }`}
+            title="Mantiene el año actual y cambia el club o selección"
           >
-            <Dices className={`w-4 h-4 ${isRolling ? 'animate-spin' : ''}`} />
-            <span>🎲 CAMBIAR PAÍS/CLUB</span>
+            <Shield className="w-4 h-4" />
+            <span>🎲 CAMBIAR CLUB/PAÍS</span>
           </button>
 
+          {/* Change Year: KEEPS the club/country, changes year (1958-2026) */}
           <button
-            onClick={() => {
-              if (reRollsLeft > 0) {
-                sound.playClick();
-                onReRollYear();
-              }
-            }}
-            disabled={reRollsLeft <= 0}
-            className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg font-display text-xs font-bold border-2 transition-all uppercase ${
+            onClick={handleReRollYearAction}
+            disabled={reRollsLeft <= 0 || rouletteState.active}
+            className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl font-display text-xs font-black border-2 transition-all uppercase ${
               reRollsLeft > 0
-                ? 'bg-[#182234] hover:bg-[#25324d] text-white border-[#2b3b5c] cursor-pointer'
-                : 'bg-gray-900 text-gray-600 border-gray-800 cursor-not-allowed'
+                ? 'bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white border-emerald-400 shadow-md cursor-pointer active:scale-95'
+                : 'bg-emerald-950 text-emerald-700 border-emerald-900 cursor-not-allowed'
             }`}
+            title="Mantiene el mismo club/selección y busca otro año histórico (1958-2026)"
           >
-            <RefreshCw className="w-4 h-4 text-[#ef4444]" />
+            <Calendar className="w-4 h-4 text-emerald-200" />
             <span>CAMBIAR DE AÑO</span>
           </button>
         </div>
       </div>
 
       {/* PICK A PLAYER LIST */}
-      <div className="bg-[#121826] border-2 border-[#26334d] rounded-xl p-4 shadow-dark-retro flex flex-col max-h-[460px]">
-        <div className="flex items-center justify-between mb-3 border-b border-[#26334d] pb-2">
-          <span className="text-xs font-black font-display uppercase tracking-widest text-white flex items-center gap-1">
-            SELECCIONA 1 JUGADOR
+      <div className="bg-[#082618] border-2 border-[#145938] rounded-2xl p-4 shadow-[0_8px_30px_rgba(0,0,0,0.5)] flex flex-col max-h-[460px]">
+        <div className="flex items-center justify-between mb-3 border-b border-emerald-800/60 pb-2">
+          <span className="text-xs font-black font-display uppercase tracking-widest text-white flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            SELECCIONA 1 JUGADOR DE LA PLANTILLA
           </span>
-          <span className="text-[10px] font-medium text-gray-400">
+          <span className="text-[10px] font-mono font-bold text-emerald-300/80">
             {currentTeam.players.length} disponibles
           </span>
         </div>
@@ -259,19 +275,19 @@ export const PickList: React.FC<PickListProps> = ({
                     onSelectPlayer(player);
                   }
                 }}
-                className={`flex items-center justify-between p-2.5 rounded-lg border-2 transition-all select-none ${
+                className={`flex items-center justify-between p-2.5 rounded-xl border-2 transition-all select-none ${
                   isSelected
-                    ? 'bg-[#ef4444] text-white border-white shadow-lg transform scale-[1.01] cursor-pointer'
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white border-white shadow-lg transform scale-[1.01] cursor-pointer'
                     : isTaken
-                    ? 'bg-[#0f172a] text-gray-500 border-gray-800 opacity-40 cursor-not-allowed'
+                    ? 'bg-[#031c11] text-emerald-800 border-emerald-950 opacity-40 cursor-not-allowed'
                     : isOccupied
-                    ? 'bg-[#170e13] text-gray-400 border-red-900/60 opacity-80 cursor-not-allowed'
-                    : 'bg-[#182234] hover:bg-[#25324d] text-white border-[#2b3b5c] cursor-pointer'
+                    ? 'bg-[#1c0d12] text-gray-400 border-red-900/60 opacity-80 cursor-not-allowed'
+                    : 'bg-[#0b3320] hover:bg-[#0f452b] text-white border-[#175e3c] cursor-pointer shadow-sm'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-md font-display font-black text-sm flex items-center justify-center border ${
-                    isSelected ? 'bg-white text-[#ef4444] border-white' : 'bg-[#0b0f19] text-amber-400 border-[#2b3b5c]'
+                  <div className={`w-8 h-8 rounded-lg font-display font-black text-sm flex items-center justify-center border ${
+                    isSelected ? 'bg-white text-emerald-700 border-white' : 'bg-[#041c10] text-amber-400 border-emerald-700/60'
                   }`}>
                     {player.rating}
                   </div>
@@ -288,7 +304,7 @@ export const PickList: React.FC<PickListProps> = ({
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 text-[10px] font-mono text-gray-400">
+                    <div className="flex items-center gap-2 text-[10px] font-mono text-emerald-300/70">
                       <span>{player.flag} {player.nation}</span>
                       <span>•</span>
                       <span>#{player.number}</span>
@@ -304,8 +320,8 @@ export const PickList: React.FC<PickListProps> = ({
                         key={pos}
                         className={`text-[9px] font-mono font-black px-1.5 py-0.5 rounded ${
                           isSelected
-                            ? 'bg-white/20 text-white'
-                            : 'bg-[#0b0f19] text-[#ef4444] border border-[#2b3b5c]'
+                            ? 'bg-white/25 text-white border border-white/40'
+                            : 'bg-[#041c10] text-emerald-300 border border-[#175e3c]'
                         }`}
                       >
                         {pos}
@@ -314,7 +330,7 @@ export const PickList: React.FC<PickListProps> = ({
                   </div>
 
                   {isTaken && (
-                    <span className="text-[10px] font-mono font-bold text-gray-500 bg-gray-900 px-2 py-0.5 rounded">
+                    <span className="text-[10px] font-mono font-bold text-emerald-600 bg-[#041c10] px-2 py-0.5 rounded border border-emerald-900">
                       ELEGIDO
                     </span>
                   )}
@@ -326,7 +342,7 @@ export const PickList: React.FC<PickListProps> = ({
                   )}
 
                   {isSelected && (
-                    <span className="bg-white text-[#ef4444] p-1 rounded-full">
+                    <span className="bg-white text-emerald-700 p-1 rounded-full shadow-md">
                       <Check className="w-3.5 h-3.5 stroke-[3]" />
                     </span>
                   )}
@@ -339,5 +355,6 @@ export const PickList: React.FC<PickListProps> = ({
     </div>
   );
 };
+
 
 

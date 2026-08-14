@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Shield, Sparkles, User as UserIcon, Play, LogIn, Trophy, Dices, Users, Award } from 'lucide-react';
-import { User, signInWithGoogle, signInAnonymously } from '../lib/firebase';
+import { Shield, Sparkles, User as UserIcon, Play, LogIn, LogOut, Trophy, Dices, Users, Award } from 'lucide-react';
+import { User, signInWithGoogle, signInAnonymously, logoutUser } from '../lib/firebase';
 import { sound } from '../utils/audio';
 
 interface LandingMenuProps {
@@ -16,6 +16,18 @@ export const LandingMenu: React.FC<LandingMenuProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const handleLogout = async () => {
+    sound.playClick();
+    setLoading(true);
+    try {
+      await logoutUser();
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Error al cerrar sesión.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGoogleLogin = async () => {
     sound.playClick();
@@ -46,47 +58,57 @@ export const LandingMenu: React.FC<LandingMenuProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#0b0f19] text-white flex flex-col justify-between items-center p-4 md:p-8 relative overflow-hidden">
+    <div className="min-h-screen bg-transparent text-white flex flex-col justify-between items-center p-4 md:p-8 relative overflow-hidden">
       {/* Background ambient lighting */}
-      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-red-600/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-emerald-500/20 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-teal-500/15 rounded-full blur-[140px] pointer-events-none" />
 
       {/* Top Bar */}
       <header className="w-full max-w-5xl flex items-center justify-between z-10 py-2">
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#ef4444] to-[#f97316] flex items-center justify-center font-black text-xl shadow-lg">
+        <div className="flex items-center gap-2.5">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-700 flex items-center justify-center font-black text-xl shadow-lg border border-white/30">
             90
           </div>
-          <span className="font-display font-black text-xl tracking-wider uppercase text-white">
-            DRAFT <span className="text-[#ef4444]">90</span>
+          <span className="font-display font-black text-2xl tracking-wider uppercase text-white">
+            DRAFT <span className="text-emerald-400">90</span>
           </span>
         </div>
 
         {currentUser ? (
-          <div className="flex items-center gap-3 bg-[#182234] border border-[#2b3b5c] px-3 py-1.5 rounded-full shadow-md">
-            {currentUser.photoURL ? (
-              <img
-                src={currentUser.photoURL}
-                alt="Avatar"
-                className="w-7 h-7 rounded-full border border-red-500"
-              />
-            ) : (
-              <UserIcon className="w-5 h-5 text-gray-300" />
-            )}
-            <span className="text-xs font-mono font-bold text-gray-200">
-              {currentUser.displayName || (currentUser.isAnonymous ? 'Anónimo' : 'Entrenador')}
-            </span>
-            <button
+          <div className="flex items-center gap-2">
+            <div 
               onClick={onOpenAuth}
-              className="text-[10px] text-gray-400 hover:text-white underline cursor-pointer ml-1"
+              className="flex items-center gap-2.5 bg-[#082618] hover:bg-[#0c3623] border border-[#145938] px-3.5 py-1.5 rounded-xl shadow-md cursor-pointer transition-all"
+              title="Ver perfil"
             >
-              Perfil
+              {currentUser.photoURL ? (
+                <img
+                  src={currentUser.photoURL}
+                  alt="Avatar"
+                  className="w-6 h-6 rounded-full border border-emerald-400 object-cover"
+                />
+              ) : (
+                <UserIcon className="w-5 h-5 text-emerald-300" />
+              )}
+              <span className="text-xs font-mono font-bold text-emerald-200 max-w-[120px] truncate">
+                {currentUser.displayName || (currentUser.isAnonymous ? 'Invitado' : 'Entrenador')}
+              </span>
+            </div>
+
+            <button
+              onClick={handleLogout}
+              disabled={loading}
+              className="flex items-center gap-1.5 bg-red-950/60 hover:bg-red-900/80 text-red-300 hover:text-white px-3 py-1.5 rounded-xl border border-red-800/60 text-xs font-mono font-bold transition-all cursor-pointer shadow-md"
+              title="Cerrar sesión"
+            >
+              <LogOut className="w-3.5 h-3.5 text-red-400" />
+              <span className="hidden sm:inline text-xs">Cerrar sesión</span>
             </button>
           </div>
         ) : (
           <button
             onClick={onOpenAuth}
-            className="flex items-center gap-2 bg-[#182234] hover:bg-[#23314a] border border-[#2b3b5c] px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer shadow-md"
+            className="flex items-center gap-2 bg-[#082618] hover:bg-[#0c3623] border border-[#145938] px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer shadow-md text-emerald-300 hover:text-white"
           >
             <LogIn className="w-4 h-4 text-emerald-400" />
             INICIAR SESIÓN
@@ -97,16 +119,16 @@ export const LandingMenu: React.FC<LandingMenuProps> = ({
       {/* Main Hero Card */}
       <main className="w-full max-w-3xl my-auto z-10 flex flex-col items-center text-center gap-8 py-8">
         <div className="flex flex-col items-center gap-4">
-          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono font-bold tracking-wider">
-            <Trophy className="w-4 h-4 text-yellow-400" /> SIMULADOR DE DRAFT TÁCTICO & FUTBOL
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-xs font-mono font-black tracking-wider shadow-lg">
+            <Trophy className="w-4 h-4 text-amber-400" /> SIMULADOR DE DRAFT TÁCTICO & FUTBOL
           </span>
 
           <h1 className="text-4xl md:text-6xl font-display font-black tracking-tight uppercase leading-tight text-white drop-shadow-md">
-            DRAFTEA TU 11 Y CONQUISTA EL <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-400 to-yellow-400">TORNEO</span>
+            DRAFTEA TU 11 Y CONQUISTA EL <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-300">TORNEO</span>
           </h1>
 
-          <p className="max-w-xl text-sm md:text-base text-gray-300 font-sans leading-relaxed">
-            Obtén países y clubes históricos aleatorios tirando el dado, elige a tus estrellas de cada año y disputa las eliminatorias hasta la gran final.
+          <p className="max-w-xl text-sm md:text-base text-emerald-100/90 font-sans leading-relaxed">
+            Obtén países y clubes históricos aleatorios tirando el dado con ruleta animada, elige a tus estrellas de cada año y disputa las eliminatorias hasta la gran final.
           </p>
         </div>
 
@@ -124,7 +146,7 @@ export const LandingMenu: React.FC<LandingMenuProps> = ({
                 sound.playSuccess();
                 onStartGame();
               }}
-              className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-display font-black text-xl uppercase tracking-wider shadow-2xl hover:scale-[1.02] transition-all cursor-pointer flex items-center justify-center gap-3 border border-red-400/40"
+              className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-display font-black text-xl uppercase tracking-wider shadow-[0_8px_30px_rgba(16,185,129,0.4)] hover:scale-[1.02] transition-all cursor-pointer flex items-center justify-center gap-3 border border-white/40"
             >
               <Play className="w-6 h-6 fill-white" />
               EMPEZAR DRAFT
@@ -158,17 +180,17 @@ export const LandingMenu: React.FC<LandingMenuProps> = ({
               </button>
 
               <div className="flex items-center gap-3 my-1">
-                <div className="flex-1 h-px bg-[#26334d]" />
-                <span className="text-[10px] font-mono text-gray-500 uppercase">o también</span>
-                <div className="flex-1 h-px bg-[#26334d]" />
+                <div className="flex-1 h-px bg-emerald-800/80" />
+                <span className="text-[10px] font-mono text-emerald-400 uppercase">o también</span>
+                <div className="flex-1 h-px bg-emerald-800/80" />
               </div>
 
               <button
                 onClick={handleAnonLogin}
                 disabled={loading}
-                className="w-full py-3.5 px-6 rounded-2xl bg-[#182234] hover:bg-[#202d44] text-white font-display font-bold text-base transition-all cursor-pointer flex items-center justify-center gap-3 border border-[#2b3b5c] shadow-lg hover:scale-[1.01]"
+                className="w-full py-3.5 px-6 rounded-2xl bg-[#082618] hover:bg-[#0c3623] text-white font-display font-bold text-base transition-all cursor-pointer flex items-center justify-center gap-3 border border-[#145938] shadow-lg hover:scale-[1.01]"
               >
-                <UserIcon className="w-5 h-5 text-gray-400" />
+                <UserIcon className="w-5 h-5 text-emerald-400" />
                 JUGAR COMO INVITADO (ANÓNIMO)
               </button>
             </>
@@ -177,34 +199,34 @@ export const LandingMenu: React.FC<LandingMenuProps> = ({
 
         {/* Features highlights */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full mt-4 text-left">
-          <div className="p-4 rounded-xl bg-[#121826] border border-[#26334d] flex flex-col gap-2">
-            <Dices className="w-6 h-6 text-orange-400" />
-            <h3 className="font-display font-bold text-sm text-white">Tirada de Dado Única</h3>
-            <p className="text-xs text-gray-400">
-              Tira el dado para revelar un país y año aleatorio. ¡Tira para elegir tu jugador!
+          <div className="p-4 rounded-xl bg-[#082618] border border-[#145938] flex flex-col gap-2">
+            <Dices className="w-5 h-5 text-amber-400" />
+            <h3 className="font-display font-bold text-white text-base">Ruleta y Tiradas Únicas</h3>
+            <p className="text-xs text-emerald-200/70">
+              Gira la ruleta y extrae clubes y selecciones históricas de 1958 a 2026 sin repeticiones.
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#121826] border border-[#26334d] flex flex-col gap-2">
-            <Users className="w-6 h-6 text-blue-400" />
-            <h3 className="font-display font-bold text-sm text-white">Clubes y Selecciones</h3>
-            <p className="text-xs text-gray-400">
-              Desde el Real Madrid o Barça hasta Villarreal, Celta, Deportivo, Málaga, Lille, Brighton o Togo.
+          <div className="p-4 rounded-xl bg-[#082618] border border-[#145938] flex flex-col gap-2">
+            <Trophy className="w-5 h-5 text-amber-400" />
+            <h3 className="font-display font-bold text-white text-base">Torneo Eliminatorio</h3>
+            <p className="text-xs text-emerald-200/70">
+              Supera Octavos, Cuartos, Semifinales y alza el trofeo de campeón con tu XI ideal.
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#121826] border border-[#26334d] flex flex-col gap-2">
-            <Trophy className="w-6 h-6 text-yellow-400" />
-            <h3 className="font-display font-bold text-sm text-white">Cuadro de Torneo KO</h3>
-            <p className="text-xs text-gray-400">
-              Completa los 11 jugadores y simula los partidos desde Octavos de Final hasta la Copa.
+          <div className="p-4 rounded-xl bg-[#082618] border border-[#145938] flex flex-col gap-2">
+            <Award className="w-5 h-5 text-emerald-400" />
+            <h3 className="font-display font-bold text-white text-base">Re-Rolls Estratégicos</h3>
+            <p className="text-xs text-emerald-200/70">
+              Cambia el año manteniendo tu club favorito, o cambia de club manteniendo el año.
             </p>
           </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="w-full max-w-5xl text-center text-xs font-mono text-gray-500 py-4 border-t border-[#182234] z-10">
+      <footer className="w-full max-w-5xl text-center text-xs font-mono text-emerald-400/60 py-4 border-t border-[#145938]/60 z-10">
         DRAFT 90 FOOTBALL GAME · AUTENTICACIÓN FIREBASE & COPA KO
       </footer>
     </div>

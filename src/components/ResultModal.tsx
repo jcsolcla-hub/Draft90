@@ -61,25 +61,70 @@ export const ResultModal: React.FC<ResultModalProps> = ({
           {/* Clean Goals Scorecard */}
           <div className="bg-[#0b0f19] border-2 border-amber-500/30 rounded-xl p-4 my-3 text-center shadow-inner">
             <span className="text-[10px] font-black font-display uppercase tracking-widest text-amber-400 block mb-2">
-              MARCADOR Y GOLES DEL PARTIDO
+              MARCADOR Y RESUMEN OFICIAL
             </span>
             <div className="flex items-center justify-between px-2">
               <div className="text-center flex-1">
                 <span className="font-display font-black text-base md:text-lg block text-white">TU XI HISTÓRICO</span>
-                <span className="text-[10px] font-mono font-bold text-gray-400">MEDIA {result.userAvgRating}</span>
+                <span className="text-[10px] font-mono font-bold text-emerald-400">MEDIA {result.userAvgRating}</span>
               </div>
-              <div className="bg-[#182234] border-2 border-[#2b3b5c] px-6 py-2 rounded-xl text-amber-400 font-display font-black text-4xl shadow-md mx-2">
+              <div className="bg-[#182234] border-2 border-[#2b3b5c] px-6 py-2 rounded-xl text-amber-400 font-display font-black text-3xl md:text-4xl shadow-md mx-2">
                 {result.userGoals} - {result.oppGoals}
               </div>
               <div className="text-center flex-1">
-                <span className="font-display font-black text-base md:text-lg block text-white">{result.oppFlag} {result.oppTeam}</span>
+                <span className="font-display font-black text-base md:text-lg block text-white line-clamp-1">{result.oppFlag} {result.oppTeam}</span>
                 <span className="text-[10px] font-mono font-bold text-gray-400">AÑO {result.oppYear}</span>
               </div>
             </div>
-            {result.penalties && (
-              <p className="text-xs font-mono font-bold text-amber-400 mt-2">
-                ⚽ Penaltis: {result.penScore?.user} - {result.penScore?.opp}
-              </p>
+
+            {/* Regulatory Penalties Result if occurred */}
+            {result.penalties && result.penScore && (
+              <div className="mt-3 bg-amber-950/70 border border-amber-500/50 rounded-lg p-2 text-center">
+                <span className="text-xs font-mono font-black text-amber-300 uppercase">
+                  🎯 TANDA DE PENALTIS REGLAMENTARIA (IFAB): {result.penScore.user} - {result.penScore.opp}
+                </span>
+                <span className="text-[10px] font-mono text-gray-400 block mt-0.5">
+                  {result.penScore.user > result.penScore.opp ? '⭐ Victoria en los penaltis para Tu XI' : `Victoria en penaltis para ${result.oppTeam}`}
+                </span>
+              </div>
+            )}
+
+            {/* Goal Details Breakdown */}
+            {result.goalDetails && result.goalDetails.length > 0 && (
+              <div className="mt-3 border-t border-[#1e293b] pt-2 flex flex-col gap-1.5 text-left">
+                <span className="text-[10px] font-mono font-bold text-gray-400 uppercase text-center block">
+                  GOLEADORES DEL ENCUENTRO:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-medium">
+                  {/* User Goals */}
+                  <div className="bg-[#121826] p-2 rounded border border-emerald-500/30">
+                    <span className="text-[10px] font-bold text-emerald-400 block mb-1">⭐ Tu XI:</span>
+                    {result.goalDetails.filter(g => g.team === 'user').length === 0 ? (
+                      <span className="text-[10px] text-gray-500 italic">Sin goles en juego</span>
+                    ) : (
+                      result.goalDetails.filter(g => g.team === 'user').map((g, i) => (
+                        <div key={i} className="text-[11px] text-emerald-200">
+                          ⚽ {g.min}' {g.player}
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Opponent Goals */}
+                  <div className="bg-[#121826] p-2 rounded border border-amber-500/30">
+                    <span className="text-[10px] font-bold text-amber-400 block mb-1">{result.oppFlag} {result.oppTeam}:</span>
+                    {result.goalDetails.filter(g => g.team === 'opp').length === 0 ? (
+                      <span className="text-[10px] text-gray-500 italic">Sin goles en juego</span>
+                    ) : (
+                      result.goalDetails.filter(g => g.team === 'opp').map((g, i) => (
+                        <div key={i} className="text-[11px] text-amber-200">
+                          ⚽ {g.min}' {g.player}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </div>

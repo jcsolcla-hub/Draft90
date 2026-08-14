@@ -106,13 +106,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, currentUs
                 </div>
               </div>
 
+              {errorMsg && (
+                <div className="p-3 bg-red-950/80 border border-red-500/50 rounded-xl text-red-300 text-xs font-mono w-full text-left">
+                  {errorMsg}
+                </div>
+              )}
+
               <button
                 onClick={handleLogout}
                 disabled={loading}
-                className="w-full mt-2 py-3 px-4 rounded-xl bg-gray-800 hover:bg-red-900/50 text-red-400 font-display font-bold text-sm border border-red-800/50 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                className="w-full mt-2 py-3 px-4 rounded-xl bg-red-950/60 hover:bg-red-900/90 text-red-200 hover:text-white font-display font-black text-sm border-2 border-red-700/70 shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
               >
-                <LogOut className="w-4 h-4" />
-                <span>CERRAR SESIÓN</span>
+                <LogOut className="w-4 h-4 text-red-400" />
+                <span>{loading ? 'CERRANDO SESIÓN...' : 'CERRAR SESIÓN'}</span>
               </button>
             </div>
           ) : (

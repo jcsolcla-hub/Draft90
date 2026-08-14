@@ -12,7 +12,13 @@ import { AuthModal } from './components/AuthModal';
 import { LandingMenu } from './components/LandingMenu';
 
 import { Team, Player, FormationType, MatchResult, UserStats, TournamentStage } from './types';
-import { FORMATIONS, getRandomTeam, HISTORICAL_TEAMS } from './data/teamsData';
+import {
+  FORMATIONS,
+  getRandomTeam,
+  getTeamSameClubDifferentYear,
+  getTeamSameYearDifferentClub,
+  HISTORICAL_TEAMS,
+} from './data/teamsData';
 import { sound } from './utils/audio';
 import { auth, onAuthStateChanged, User } from './lib/firebase';
 
@@ -87,11 +93,11 @@ export default function App() {
     } catch {}
   }, [matchHistory]);
 
-  // Initial load: Start with Russia 2018 or random team
+  // Initial load: Pick a smart fresh random team without repeating
   useEffect(() => {
-    const russiaTeam = HISTORICAL_TEAMS.find((t) => t.id === 'ru_2018') || getRandomTeam(mode);
-    setCurrentTeam(russiaTeam);
-    setDrawnTeamIds([russiaTeam.id]);
+    const initialTeam = getRandomTeam(mode);
+    setCurrentTeam(initialTeam);
+    setDrawnTeamIds([initialTeam.id]);
   }, []);
 
   // Update mode filter and draw new team
@@ -109,21 +115,22 @@ export default function App() {
     setSelectedPlayer(null);
   };
 
-  // Re-roll actions (Uses up 1 of the 3 TOTAL re-rolls)
+  // Re-roll: Change Country/Club (KEEPS the exact year, changes club/country)
   const handleReRollTeam = () => {
-    if (reRollsLeft <= 0) return;
+    if (reRollsLeft <= 0 || !currentTeam) return;
     setReRollsLeft((prev) => prev - 1);
     setSelectedPlayer(null);
-    const nextTeam = getRandomTeam(mode, currentTeam?.id, drawnTeamIds);
+    const nextTeam = getTeamSameYearDifferentClub(currentTeam, mode, drawnTeamIds);
     setCurrentTeam(nextTeam);
     setDrawnTeamIds((prev) => [...prev, nextTeam.id]);
   };
 
+  // Re-roll: Change Year (KEEPS the exact club/country, changes year from 1958 to 2026)
   const handleReRollYear = () => {
-    if (reRollsLeft <= 0) return;
+    if (reRollsLeft <= 0 || !currentTeam) return;
     setReRollsLeft((prev) => prev - 1);
     setSelectedPlayer(null);
-    const nextTeam = getRandomTeam(mode, currentTeam?.id, drawnTeamIds);
+    const nextTeam = getTeamSameClubDifferentYear(currentTeam, drawnTeamIds);
     setCurrentTeam(nextTeam);
     setDrawnTeamIds((prev) => [...prev, nextTeam.id]);
   };
@@ -178,11 +185,15 @@ export default function App() {
   const handleNewDraft = () => {
     setPlacedPlayers(Array(11).fill(null));
     setDraftedPlayerIds(new Set());
-    setDrawnTeamIds([]);
     setSelectedPlayer(null);
     setReRollsLeft(3); // Reset to 3 total rerolls for new tournament/draft
     setTournamentStage('octavos');
     setHasRolledForPick(false);
+    
+    // Draw a fresh non-repeating initial team for the new draft
+    const freshTeam = getRandomTeam(mode, currentTeam?.id);
+    setCurrentTeam(freshTeam);
+    setDrawnTeamIds([freshTeam.id]);
   };
 
   const handleNextRound = () => {

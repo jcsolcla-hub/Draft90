@@ -1,7 +1,7 @@
-import React from 'react';
-import { Volume2, VolumeX, Trophy, Database, RefreshCw, User as UserIcon, LogIn } from 'lucide-react';
+import React, { useState } from 'react';
+import { Volume2, VolumeX, Trophy, Database, RefreshCw, User as UserIcon, LogIn, LogOut } from 'lucide-react';
 import { sound } from '../utils/audio';
-import { User } from '../lib/firebase';
+import { User, logoutUser } from '../lib/firebase';
 
 interface HeaderProps {
   mode: 'worldcup' | 'champions' | 'all';
@@ -32,25 +32,40 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAuth,
   onOpenMenu,
 }) => {
+  const [loggingOut, setLoggingOut] = useState(false);
+
   const toggleSound = () => {
     sound.enabled = !soundEnabled;
     setSoundEnabled(!soundEnabled);
     if (!soundEnabled) sound.playClick();
   };
 
+  const handleDirectLogout = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    sound.playClick();
+    setLoggingOut(true);
+    try {
+      await logoutUser();
+    } catch (err) {
+      console.error('Error logging out:', err);
+    } finally {
+      setLoggingOut(false);
+    }
+  };
+
   return (
-    <header className="w-full flex flex-col border-b-2 border-[#243049] bg-[#121826] sticky top-0 z-30 shadow-md">
+    <header className="w-full flex flex-col border-b-2 border-[#145938] bg-[#072618] sticky top-0 z-30 shadow-lg">
       {/* Top Banner */}
-      <div className="bg-[#182234] text-[#f1f5f9] px-4 py-1.5 text-xs font-bold font-display uppercase tracking-wider flex items-center justify-between border-b border-[#243049]">
+      <div className="bg-[#041c10] text-[#f1f5f9] px-4 py-1.5 text-xs font-bold font-display uppercase tracking-wider flex items-center justify-between border-b border-[#145938]/80">
         <div className="flex items-center gap-2">
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#ef4444] animate-ping" />
-          <span className="text-[#ef4444] font-black">DRAFT 90 · MUNDIALES Y CHAMPIONS</span>
+          <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+          <span className="text-emerald-400 font-black">DRAFT 90 · MUNDIALES Y CHAMPIONS LEAGUE</span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="hidden md:inline text-[11px] font-mono text-gray-400">
+          <span className="hidden md:inline text-[11px] font-mono text-emerald-200/80">
             3 RE-ROLLS TOTALES POR PARTIDA ({totalReRollsLeft} DISPONIBLES)
           </span>
-          <span className="bg-[#ef4444] text-white px-2.5 py-0.5 rounded text-[10px] font-black font-mono">
+          <span className="bg-amber-400 text-black px-2.5 py-0.5 rounded-full text-[10px] font-black font-mono shadow-sm">
             {totalPoints.toLocaleString()} PTS
           </span>
         </div>
@@ -64,27 +79,27 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={onNewDraft}
             className="flex items-center gap-2 cursor-pointer group"
           >
-            <div className="bg-[#ef4444] text-white font-black font-display text-2xl w-10 h-10 flex items-center justify-center rounded-lg border-2 border-[#f1f5f9]/20 shadow-md group-hover:scale-105 transition-transform">
+            <div className="bg-gradient-to-br from-emerald-500 to-teal-700 text-white font-black font-display text-2xl w-10 h-10 flex items-center justify-center rounded-xl border-2 border-white/40 shadow-md group-hover:scale-105 transition-transform">
               90
             </div>
             <div>
               <h1 className="font-display font-black text-2xl tracking-tight text-white leading-none">
-                DRAFT <span className="text-[#ef4444]">90</span>
+                DRAFT <span className="text-emerald-400">90</span>
               </h1>
-              <p className="text-[10px] font-medium text-gray-400 tracking-wider uppercase">
+              <p className="text-[10px] font-medium text-emerald-300/80 tracking-wider uppercase">
                 Football Tactical Draft
               </p>
             </div>
           </div>
 
           {/* Tournament Mode Selector */}
-          <div className="hidden sm:flex items-center ml-4 bg-[#182234] p-1 rounded-xl border border-[#2b3b5c]">
+          <div className="hidden sm:flex items-center ml-4 bg-[#041c10] p-1 rounded-xl border border-[#145938]">
             <button
               onClick={() => { sound.playClick(); setMode('all'); }}
               className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                 mode === 'all'
-                  ? 'bg-[#ef4444] text-white shadow-sm'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-emerald-500 text-white shadow-sm'
+                  : 'text-emerald-300/70 hover:text-white'
               }`}
             >
               Todos
@@ -93,8 +108,8 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => { sound.playClick(); setMode('worldcup'); }}
               className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
                 mode === 'worldcup'
-                  ? 'bg-[#ef4444] text-white shadow-sm'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-emerald-500 text-white shadow-sm'
+                  : 'text-emerald-300/70 hover:text-white'
               }`}
             >
               🏆 Mundial
@@ -103,8 +118,8 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => { sound.playClick(); setMode('champions'); }}
               className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
                 mode === 'champions'
-                  ? 'bg-[#ef4444] text-white shadow-sm'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-emerald-500 text-white shadow-sm'
+                  : 'text-emerald-300/70 hover:text-white'
               }`}
             >
               ⭐ Champions
@@ -118,55 +133,69 @@ export const Header: React.FC<HeaderProps> = ({
           {onOpenMenu && (
             <button
               onClick={() => { sound.playClick(); onOpenMenu(); }}
-              className="flex items-center gap-1.5 bg-[#182234] hover:bg-[#223049] text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-[#2b3b5c] transition-all cursor-pointer"
+              className="flex items-center gap-1.5 bg-[#082b1c] hover:bg-[#0c3d28] text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-[#145938] transition-all cursor-pointer shadow-sm"
               title="Menú Principal"
             >
               <span>Menú</span>
             </button>
           )}
 
-          <button
-            onClick={() => { sound.playClick(); onOpenAuth(); }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
-              currentUser
-                ? 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border-amber-500/40'
-                : 'bg-[#ef4444] hover:bg-red-600 text-white border-white shadow-md'
-            }`}
-            title={currentUser ? 'Ver perfil' : 'Iniciar sesión'}
-          >
-            {currentUser?.photoURL ? (
-              <img src={currentUser.photoURL} alt="User" className="w-5 h-5 rounded-full object-cover border border-white" />
-            ) : currentUser ? (
-              <UserIcon className="w-4 h-4 text-amber-400" />
-            ) : (
-              <LogIn className="w-4 h-4 text-white" />
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => { sound.playClick(); onOpenAuth(); }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
+                currentUser
+                  ? 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/50'
+                  : 'bg-emerald-500 hover:bg-emerald-600 text-white border-white shadow-md'
+              }`}
+              title={currentUser ? 'Ver perfil' : 'Iniciar sesión'}
+            >
+              {currentUser?.photoURL ? (
+                <img src={currentUser.photoURL} alt="User" className="w-5 h-5 rounded-full object-cover border border-white" />
+              ) : currentUser ? (
+                <UserIcon className="w-4 h-4 text-amber-300" />
+              ) : (
+                <LogIn className="w-4 h-4 text-white" />
+              )}
+              <span className="text-xs font-bold font-display max-w-[100px] truncate">
+                {currentUser ? (currentUser.displayName || (currentUser.isAnonymous ? 'Invitado' : 'Perfil')) : 'Entrar'}
+              </span>
+            </button>
+
+            {currentUser && (
+              <button
+                onClick={handleDirectLogout}
+                disabled={loggingOut}
+                className="flex items-center gap-1 bg-red-950/60 hover:bg-red-900/80 text-red-300 hover:text-white text-xs font-bold px-2.5 py-1.5 rounded-lg border border-red-800/60 transition-all cursor-pointer shadow-sm"
+                title="Cerrar sesión"
+              >
+                <LogOut className="w-3.5 h-3.5 text-red-400" />
+                <span className="hidden sm:inline text-[11px]">Salir</span>
+              </button>
             )}
-            <span className="text-xs font-bold font-display max-w-[100px] truncate">
-              {currentUser ? (currentUser.displayName || (currentUser.isAnonymous ? 'Invitado' : 'Perfil')) : 'Entrar'}
-            </span>
-          </button>
+          </div>
 
           <button
             onClick={() => { sound.playClick(); onNewDraft(); }}
-            className="hidden lg:flex items-center gap-1.5 bg-[#182234] hover:bg-[#223049] text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-[#2b3b5c] transition-all"
+            className="hidden lg:flex items-center gap-1.5 bg-[#082b1c] hover:bg-[#0c3d28] text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-[#145938] transition-all"
             title="Nuevo Draft"
           >
-            <RefreshCw className="w-3.5 h-3.5 text-[#ef4444]" />
+            <RefreshCw className="w-3.5 h-3.5 text-emerald-400" />
             <span>Nuevo Draft</span>
           </button>
 
           <button
             onClick={() => { sound.playClick(); onOpenDatabase(); }}
-            className="flex items-center gap-1.5 bg-[#182234] hover:bg-[#223049] text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-[#2b3b5c] transition-all"
+            className="flex items-center gap-1.5 bg-[#082b1c] hover:bg-[#0c3d28] text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-[#145938] transition-all"
             title="Enciclopedia de Plantillas"
           >
-            <Database className="w-3.5 h-3.5 text-blue-400" />
+            <Database className="w-3.5 h-3.5 text-teal-300" />
             <span className="hidden md:inline">Plantillas</span>
           </button>
 
           <button
             onClick={() => { sound.playClick(); onOpenHistory(); }}
-            className="flex items-center gap-1.5 bg-[#182234] hover:bg-[#223049] text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-[#2b3b5c] transition-all"
+            className="flex items-center gap-1.5 bg-[#082b1c] hover:bg-[#0c3d28] text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-[#145938] transition-all"
             title="Historial y Stats"
           >
             <Trophy className="w-3.5 h-3.5 text-amber-400" />
@@ -175,10 +204,10 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={toggleSound}
-            className="p-2 bg-[#182234] hover:bg-[#223049] text-white rounded-lg border border-[#2b3b5c] transition-all"
+            className="p-2 bg-[#082b1c] hover:bg-[#0c3d28] text-white rounded-lg border border-[#145938] transition-all"
             title={soundEnabled ? "Silenciar audio" : "Activar audio"}
           >
-            {soundEnabled ? <Volume2 className="w-4 h-4 text-[#ef4444]" /> : <VolumeX className="w-4 h-4 text-gray-500" />}
+            {soundEnabled ? <Volume2 className="w-4 h-4 text-emerald-400" /> : <VolumeX className="w-4 h-4 text-emerald-700" />}
           </button>
         </div>
       </div>

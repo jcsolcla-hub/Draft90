@@ -48,11 +48,36 @@ export interface PlacedPlayer {
 
 export type TournamentStage = 'draft' | 'octavos' | 'cuartos' | 'semis' | 'final' | 'champion' | 'eliminated';
 
+export interface PenaltyKick {
+  round: number; // 1 to 5, or 6+ for sudden death
+  taker: string;
+  takerTeam: 'user' | 'opp';
+  goalkeeper: string;
+  scored: boolean;
+  type: 'goal' | 'saved' | 'woodwork' | 'miss';
+  text: string;
+}
+
+export interface GoalDetail {
+  min: number;
+  player: string;
+  pos?: string;
+  team: 'user' | 'opp';
+  teamName: string;
+  teamFlag: string;
+  assist?: string;
+  description: string;
+  scoreAfter: { user: number; opp: number };
+}
+
 export interface MatchEvent {
   min: number;
-  type: 'kickoff' | 'goal' | 'goalOpp' | 'save' | 'miss' | 'missOpp' | 'foul' | 'half' | 'end' | 'card' | 'penalty';
+  type: 'kickoff' | 'goal' | 'goalOpp' | 'save' | 'miss' | 'missOpp' | 'foul' | 'half' | 'extraTime' | 'end' | 'card' | 'penaltyShootout';
   text: string;
   player?: string;
+  detail?: string;
+  userScore?: number;
+  oppScore?: number;
 }
 
 export interface MatchStats {
@@ -70,6 +95,8 @@ export interface MatchStats {
   foulsOpp: number;
   savesUser: number;
   savesOpp: number;
+  xGUser?: number;
+  xGOpp?: number;
 }
 
 export interface MatchResult {
@@ -84,6 +111,8 @@ export interface MatchResult {
   extraTime: boolean;
   penalties: boolean;
   penScore?: { user: number; opp: number };
+  penaltyKicks?: PenaltyKick[];
+  goalDetails?: GoalDetail[];
   won: boolean;
   mvp: {
     name: string;
