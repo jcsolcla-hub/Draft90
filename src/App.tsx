@@ -125,6 +125,15 @@ export default function App() {
     setDrawnTeamIds((prev) => [...prev, nextTeam.id]);
   };
 
+  // Rewarded Ad Re-roll: Change Country/Club for FREE (KEEPS the exact year, changes club/country without consuming tokens)
+  const handleFreeReRollTeam = () => {
+    if (!currentTeam) return;
+    setSelectedPlayer(null);
+    const nextTeam = getTeamSameYearDifferentClub(currentTeam, mode, drawnTeamIds);
+    setCurrentTeam(nextTeam);
+    setDrawnTeamIds((prev) => [...prev, nextTeam.id]);
+  };
+
   // Re-roll: Change Year (KEEPS the exact club/country, changes year from 1958 to 2026)
   const handleReRollYear = () => {
     if (reRollsLeft <= 0 || !currentTeam) return;
@@ -133,6 +142,20 @@ export default function App() {
     const nextTeam = getTeamSameClubDifferentYear(currentTeam, drawnTeamIds);
     setCurrentTeam(nextTeam);
     setDrawnTeamIds((prev) => [...prev, nextTeam.id]);
+  };
+
+  // Rewarded Ad Re-roll: Change Year for FREE (KEEPS the exact club/country, changes year without consuming tokens)
+  const handleFreeReRollYear = () => {
+    if (!currentTeam) return;
+    setSelectedPlayer(null);
+    const nextTeam = getTeamSameClubDifferentYear(currentTeam, drawnTeamIds);
+    setCurrentTeam(nextTeam);
+    setDrawnTeamIds((prev) => [...prev, nextTeam.id]);
+  };
+
+  // Rewarded Ad: Add +1 reroll token to the current draft
+  const handleAddReRollToken = () => {
+    setReRollsLeft((prev) => prev + 1);
   };
 
   // Player Selection & Slot Placement
@@ -316,6 +339,9 @@ export default function App() {
               reRollsLeft={reRollsLeft}
               onReRollTeam={handleReRollTeam}
               onReRollYear={handleReRollYear}
+              onFreeReRollTeam={handleFreeReRollTeam}
+              onFreeReRollYear={handleFreeReRollYear}
+              onAddReRollToken={handleAddReRollToken}
               selectedPlayer={selectedPlayer}
               onSelectPlayer={handleSelectPlayer}
               draftedPlayerIds={draftedPlayerIds}

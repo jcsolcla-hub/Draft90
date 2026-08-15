@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { RefreshCw, Check, Dices, Sparkles, Calendar, Shield } from 'lucide-react';
+import { RefreshCw, Check, Dices, Sparkles, Calendar, Shield, Tv, Gift, Award, Zap } from 'lucide-react';
 import { Team, Player, SlotConfig } from '../types';
 import { sound } from '../utils/audio';
 import { TeamRoulette } from './TeamRoulette';
+import { AdRewardModal, AdRewardType } from './AdRewardModal';
 
 interface PickListProps {
   currentTeam: Team | null;
@@ -11,6 +12,9 @@ interface PickListProps {
   reRollsLeft: number;
   onReRollTeam: () => void;
   onReRollYear: () => void;
+  onFreeReRollTeam: () => void;
+  onFreeReRollYear: () => void;
+  onAddReRollToken: () => void;
   selectedPlayer: Player | null;
   onSelectPlayer: (player: Player) => void;
   draftedPlayerIds: Set<string>;
@@ -26,6 +30,9 @@ export const PickList: React.FC<PickListProps> = ({
   reRollsLeft,
   onReRollTeam,
   onReRollYear,
+  onFreeReRollTeam,
+  onFreeReRollYear,
+  onAddReRollToken,
   selectedPlayer,
   onSelectPlayer,
   draftedPlayerIds,
@@ -38,6 +45,14 @@ export const PickList: React.FC<PickListProps> = ({
     type: 'full' | 'year' | 'club';
     targetTeam?: Team;
   }>({ active: false, type: 'full' });
+
+  const [adModal, setAdModal] = useState<{
+    isOpen: boolean;
+    rewardType: AdRewardType;
+  }>({
+    isOpen: false,
+    rewardType: 'club',
+  });
 
   const totalPlaced = placedPlayers.filter(Boolean).length;
   const isDraftComplete = totalPlaced === 11;
@@ -72,6 +87,27 @@ export const PickList: React.FC<PickListProps> = ({
     sound.playClick();
     onReRollYear();
     setRouletteState({ active: true, type: 'year' });
+  };
+
+  const handleOpenAdForReward = (type: AdRewardType) => {
+    if (rouletteState.active || isDraftComplete) return;
+    sound.playClick();
+    setAdModal({
+      isOpen: true,
+      rewardType: type,
+    });
+  };
+
+  const handleRewardClaimed = (type: AdRewardType) => {
+    if (type === 'club') {
+      onFreeReRollTeam();
+      setRouletteState({ active: true, type: 'club' });
+    } else if (type === 'year') {
+      onFreeReRollYear();
+      setRouletteState({ active: true, type: 'year' });
+    } else if (type === 'token') {
+      onAddReRollToken();
+    }
   };
 
   // STATE SPECIAL: 11 PLAYERS DRAFTED (COMPLETED)
@@ -160,10 +196,27 @@ export const PickList: React.FC<PickListProps> = ({
             <Sparkles className="w-5 h-5 text-amber-300" />
           </button>
 
-          <div className="text-[10px] font-mono text-emerald-300/70">
-            Cambiadores de dado disponibles en partida: <span className="text-amber-400 font-bold">{reRollsLeft}/3</span>
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-2 pt-2 border-t border-emerald-800/50">
+            <span className="text-[10px] font-mono text-emerald-300/80">
+              Cambiadores de dado: <strong className="text-amber-400">{reRollsLeft}/3</strong>
+            </span>
+            <button
+              onClick={() => handleOpenAdForReward('token')}
+              className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-amber-300 hover:text-white bg-[#031c10] hover:bg-[#072d1a] border border-amber-500/40 px-2.5 py-1 rounded-lg transition-all cursor-pointer"
+            >
+              <Tv className="w-3 h-3 text-amber-400" />
+              <span>+1 Cambio gratis (Ver anuncio)</span>
+            </button>
           </div>
         </div>
+
+        {/* REWARDED AD MODAL */}
+        <AdRewardModal
+          isOpen={adModal.isOpen}
+          rewardType={adModal.rewardType}
+          onClose={() => setAdModal((prev) => ({ ...prev, isOpen: false }))}
+          onRewardClaimed={handleRewardClaimed}
+        />
       </div>
     );
   }
@@ -201,11 +254,11 @@ export const PickList: React.FC<PickListProps> = ({
         </div>
       </div>
 
-      {/* RE-ROLL CONTROL BOX (3 TOTAL PER GAME) */}
-      <div className="bg-[#082618] border-2 border-[#145938] rounded-2xl p-3.5 shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
-        <div className="flex items-center justify-between mb-2">
+      {/* RE-ROLL & REWARDED ADS CONTROL BOX */}
+      <div className="bg-[#082618] border-2 border-[#145938] rounded-2xl p-3.5 shadow-[0_4px_20px_rgba(0,0,0,0.4)] flex flex-col gap-3">
+        <div className="flex items-center justify-between">
           <span className="text-[10px] font-black font-display uppercase tracking-wider text-emerald-300/80">
-            ¿NO TE GUSTA EL SORTEO? ({reRollsLeft} CAMBIOS RESTANTES)
+            ¿NO TE GUSTA EL SORTEO? ({reRollsLeft} CAMBIOS EN PARTIDA)
           </span>
           <span className={`text-[10px] font-bold font-mono px-2.5 py-0.5 rounded-full ${
             reRollsLeft > 0 ? 'bg-amber-400 text-black font-black' : 'bg-emerald-950 text-emerald-600'
@@ -214,35 +267,81 @@ export const PickList: React.FC<PickListProps> = ({
           </span>
         </div>
 
+        {/* Standard Reroll Buttons */}
         <div className="grid grid-cols-2 gap-2">
           {/* Change Club/Country: KEEPS the year, changes club/country */}
           <button
             onClick={handleReRollClubAction}
             disabled={reRollsLeft <= 0 || rouletteState.active}
-            className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl font-display text-xs font-black border-2 transition-all uppercase ${
+            className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl font-display text-xs font-black border-2 transition-all uppercase ${
               reRollsLeft > 0
                 ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black border-white shadow-md cursor-pointer active:scale-95'
-                : 'bg-emerald-950 text-emerald-700 border-emerald-900 cursor-not-allowed'
+                : 'bg-emerald-950 text-emerald-700 border-emerald-900 cursor-not-allowed opacity-60'
             }`}
             title="Mantiene el año actual y cambia el club o selección"
           >
             <Shield className="w-4 h-4" />
-            <span>🎲 CAMBIAR CLUB/PAÍS</span>
+            <span>CAMBIAR CLUB/PAÍS ({reRollsLeft})</span>
           </button>
 
           {/* Change Year: KEEPS the club/country, changes year (1958-2026) */}
           <button
             onClick={handleReRollYearAction}
             disabled={reRollsLeft <= 0 || rouletteState.active}
-            className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl font-display text-xs font-black border-2 transition-all uppercase ${
+            className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl font-display text-xs font-black border-2 transition-all uppercase ${
               reRollsLeft > 0
                 ? 'bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white border-emerald-400 shadow-md cursor-pointer active:scale-95'
-                : 'bg-emerald-950 text-emerald-700 border-emerald-900 cursor-not-allowed'
+                : 'bg-emerald-950 text-emerald-700 border-emerald-900 cursor-not-allowed opacity-60'
             }`}
             title="Mantiene el mismo club/selección y busca otro año histórico (1958-2026)"
           >
             <Calendar className="w-4 h-4 text-emerald-200" />
-            <span>CAMBIAR DE AÑO</span>
+            <span>CAMBIAR DE AÑO ({reRollsLeft})</span>
+          </button>
+        </div>
+
+        {/* REWARDED ADS SECTION (UNLIMITED EXTRA ROLLS BY WATCHING AN AD) */}
+        <div className="pt-2 border-t border-emerald-800/60 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black font-display uppercase tracking-widest text-amber-300 flex items-center gap-1">
+              <Tv className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+              <span>MIRA UN ANUNCIO PARA CAMBIAR GRATIS</span>
+            </span>
+            <span className="text-[9px] font-mono text-emerald-300 bg-[#031c10] px-2 py-0.5 rounded border border-emerald-700/50">
+              ILIMITADO
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => handleOpenAdForReward('club')}
+              disabled={rouletteState.active}
+              className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-300 hover:text-white border-2 border-amber-500/60 font-display text-[11px] font-black uppercase transition-all cursor-pointer active:scale-95 shadow-sm"
+              title="Mira un vídeo corto para cambiar Club o Selección manteniendo el año"
+            >
+              <Tv className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span>📺 VER ANUNCIO: CLUB</span>
+            </button>
+
+            <button
+              onClick={() => handleOpenAdForReward('year')}
+              disabled={rouletteState.active}
+              className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-gradient-to-r from-teal-500/20 to-emerald-500/20 hover:from-teal-500/30 hover:to-emerald-500/30 text-teal-300 hover:text-white border-2 border-teal-500/60 font-display text-[11px] font-black uppercase transition-all cursor-pointer active:scale-95 shadow-sm"
+              title="Mira un vídeo corto para cambiar el año manteniendo el Club o Selección"
+            >
+              <Tv className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+              <span>📺 VER ANUNCIO: AÑO</span>
+            </button>
+          </div>
+
+          <button
+            onClick={() => handleOpenAdForReward('token')}
+            disabled={rouletteState.active}
+            className="w-full py-1.5 px-2 rounded-lg bg-[#041a0e] hover:bg-[#072615] border border-emerald-600/50 text-[10px] font-mono font-bold text-emerald-300 hover:text-white flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+            title="Mira un anuncio para recargar +1 cambio en tu contador"
+          >
+            <Gift className="w-3 h-3 text-amber-400" />
+            <span>¿Quieres más tiradas? <strong>Ver anuncio para +1 Cambio de dado</strong></span>
           </button>
         </div>
       </div>
@@ -352,6 +451,14 @@ export const PickList: React.FC<PickListProps> = ({
           })}
         </div>
       </div>
+
+      {/* REWARDED AD MODAL (Simulated & SDK-Ready for Google AdSense / AdMob) */}
+      <AdRewardModal
+        isOpen={adModal.isOpen}
+        rewardType={adModal.rewardType}
+        onClose={() => setAdModal((prev) => ({ ...prev, isOpen: false }))}
+        onRewardClaimed={handleRewardClaimed}
+      />
     </div>
   );
 };
