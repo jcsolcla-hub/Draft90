@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Sparkles, User as UserIcon, Play, LogIn, LogOut, Trophy, Dices, Users, Award } from 'lucide-react';
+import { Shield, Sparkles, User as UserIcon, Play, LogIn, LogOut, Trophy, Dices, Users, Award, BookOpen, MessageCircle } from 'lucide-react';
 import { User, signInWithGoogle, signInAnonymously, logoutUser } from '../lib/firebase';
 import { sound } from '../utils/audio';
 
@@ -7,12 +7,16 @@ interface LandingMenuProps {
   currentUser: User | null;
   onStartGame: () => void;
   onOpenAuth: () => void;
+  onOpenGuide?: () => void;
+  onShareWhatsApp?: () => void;
 }
 
 export const LandingMenu: React.FC<LandingMenuProps> = ({
   currentUser,
   onStartGame,
   onOpenAuth,
+  onOpenGuide,
+  onShareWhatsApp,
 }) => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -74,46 +78,70 @@ export const LandingMenu: React.FC<LandingMenuProps> = ({
           </span>
         </div>
 
-        {currentUser ? (
-          <div className="flex items-center gap-2">
-            <div 
-              onClick={onOpenAuth}
-              className="flex items-center gap-2.5 bg-[#082618] hover:bg-[#0c3623] border border-[#145938] px-3.5 py-1.5 rounded-xl shadow-md cursor-pointer transition-all"
-              title="Ver perfil"
-            >
-              {currentUser.photoURL ? (
-                <img
-                  src={currentUser.photoURL}
-                  alt="Avatar"
-                  className="w-6 h-6 rounded-full border border-emerald-400 object-cover"
-                />
-              ) : (
-                <UserIcon className="w-5 h-5 text-emerald-300" />
-              )}
-              <span className="text-xs font-mono font-bold text-emerald-200 max-w-[120px] truncate">
-                {currentUser.displayName || (currentUser.isAnonymous ? 'Invitado' : 'Entrenador')}
-              </span>
-            </div>
-
+        <div className="flex items-center gap-2">
+          {onOpenGuide && (
             <button
-              onClick={handleLogout}
-              disabled={loading}
-              className="flex items-center gap-1.5 bg-red-950/60 hover:bg-red-900/80 text-red-300 hover:text-white px-3 py-1.5 rounded-xl border border-red-800/60 text-xs font-mono font-bold transition-all cursor-pointer shadow-md"
-              title="Cerrar sesión"
+              onClick={() => { sound.playClick(); onOpenGuide(); }}
+              className="flex items-center gap-1.5 bg-[#082618] hover:bg-[#0c3623] border border-amber-500/40 text-amber-300 hover:text-amber-200 px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer shadow-md"
+              title="Guía oficial de juego"
             >
-              <LogOut className="w-3.5 h-3.5 text-red-400" />
-              <span className="hidden sm:inline text-xs">Cerrar sesión</span>
+              <BookOpen className="w-4 h-4 text-amber-400" />
+              <span className="hidden sm:inline">Guía</span>
             </button>
-          </div>
-        ) : (
-          <button
-            onClick={onOpenAuth}
-            className="flex items-center gap-2 bg-[#082618] hover:bg-[#0c3623] border border-[#145938] px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer shadow-md text-emerald-300 hover:text-white"
-          >
-            <LogIn className="w-4 h-4 text-emerald-400" />
-            INICIAR SESIÓN
-          </button>
-        )}
+          )}
+
+          {onShareWhatsApp && (
+            <button
+              onClick={() => { sound.playClick(); onShareWhatsApp(); }}
+              className="flex items-center gap-1.5 bg-emerald-700/80 hover:bg-emerald-600 border border-emerald-500/50 text-white px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer shadow-md"
+              title="Compartir juego por WhatsApp"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span className="hidden sm:inline">WhatsApp</span>
+            </button>
+          )}
+
+          {currentUser ? (
+            <div className="flex items-center gap-2">
+              <div 
+                onClick={onOpenAuth}
+                className="flex items-center gap-2.5 bg-[#082618] hover:bg-[#0c3623] border border-[#145938] px-3.5 py-1.5 rounded-xl shadow-md cursor-pointer transition-all"
+                title="Ver perfil"
+              >
+                {currentUser.photoURL ? (
+                  <img
+                    src={currentUser.photoURL}
+                    alt="Avatar"
+                    className="w-6 h-6 rounded-full border border-emerald-400 object-cover"
+                  />
+                ) : (
+                  <UserIcon className="w-5 h-5 text-emerald-300" />
+                )}
+                <span className="text-xs font-mono font-bold text-emerald-200 max-w-[120px] truncate">
+                  {currentUser.displayName || (currentUser.isAnonymous ? 'Invitado' : 'Entrenador')}
+                </span>
+              </div>
+
+              <button
+                onClick={handleLogout}
+                disabled={loading}
+                className="flex items-center gap-1.5 bg-red-950/60 hover:bg-red-900/80 text-red-300 hover:text-white px-3 py-1.5 rounded-xl border border-red-800/60 text-xs font-mono font-bold transition-all cursor-pointer shadow-md"
+                title="Cerrar sesión"
+              >
+                <LogOut className="w-3.5 h-3.5 text-red-400" />
+                <span className="hidden sm:inline text-xs">Cerrar sesión</span>
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={onOpenAuth}
+              className="flex items-center gap-2 bg-[#082618] hover:bg-[#0c3623] border border-[#145938] px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer shadow-md text-emerald-300 hover:text-white"
+            >
+              <LogIn className="w-4 h-4 text-emerald-400" />
+              INICIAR SESIÓN
+            </button>
+          )}
+        </div>
       </header>
 
       {/* Main Hero Card */}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { SlotConfig, Player } from '../types';
 import { calculateEffectiveRating, POSITIONS_MAP } from '../data/teamsData';
-import { Play } from 'lucide-react';
+import { Play, MessageCircle } from 'lucide-react';
 import { sound } from '../utils/audio';
 
 interface BoxScoreProps {
@@ -9,6 +9,7 @@ interface BoxScoreProps {
   placedPlayers: (Player | null)[];
   onSimulateMatch: () => void;
   onClearSlot: (index: number) => void;
+  onShareWhatsApp?: () => void;
 }
 
 export const BoxScore: React.FC<BoxScoreProps> = ({
@@ -16,6 +17,7 @@ export const BoxScore: React.FC<BoxScoreProps> = ({
   placedPlayers,
   onSimulateMatch,
   onClearSlot,
+  onShareWhatsApp,
 }) => {
   const totalPlaced = placedPlayers.filter(Boolean).length;
   const isComplete = totalPlaced >= 11;
@@ -149,6 +151,19 @@ export const BoxScore: React.FC<BoxScoreProps> = ({
           <Play className="w-4 h-4 fill-current" />
           <span>{isComplete ? 'JUGAR OCTAVOS DE FINAL ⚽' : `COMPLETA EL XI (${totalPlaced}/11)`}</span>
         </button>
+
+        {totalPlaced > 0 && onShareWhatsApp && (
+          <button
+            onClick={() => {
+              sound.playClick();
+              onShareWhatsApp();
+            }}
+            className="w-full py-2 px-3 rounded-lg bg-emerald-700/80 hover:bg-emerald-600 text-white font-display text-xs font-bold tracking-wider uppercase border border-emerald-500/50 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+          >
+            <MessageCircle className="w-3.5 h-3.5" />
+            <span>Compartir XI en WhatsApp</span>
+          </button>
+        )}
       </div>
     </div>
   );

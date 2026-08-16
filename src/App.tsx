@@ -10,6 +10,8 @@ import { HistoryModal } from './components/HistoryModal';
 import { DatabaseModal } from './components/DatabaseModal';
 import { AuthModal } from './components/AuthModal';
 import { LandingMenu } from './components/LandingMenu';
+import { GuideModal } from './components/GuideModal';
+import { shareSquadOnWhatsApp } from './utils/share';
 
 import { Team, Player, FormationType, MatchResult, UserStats, TournamentStage } from './types';
 import {
@@ -43,8 +45,13 @@ export default function App() {
   const [tournamentStage, setTournamentStage] = useState<TournamentStage>('octavos');
 
   // Modals state
-  const [activeModal, setActiveModal] = useState<'none' | 'match_sim' | 'result' | 'card' | 'history' | 'database'>('none');
+  const [activeModal, setActiveModal] = useState<'none' | 'match_sim' | 'result' | 'card' | 'history' | 'database' | 'guide'>('none');
   const [lastMatchResult, setLastMatchResult] = useState<MatchResult | null>(null);
+
+  const handleShareWhatsApp = () => {
+    sound.playClick();
+    shareSquadOnWhatsApp(placedPlayers, currentSlots, formation, userStats.totalPoints);
+  };
 
   // Subscribe to Firebase Auth
   useEffect(() => {
@@ -269,11 +276,17 @@ export default function App() {
           currentUser={currentUser}
           onStartGame={() => setHasEnteredGame(true)}
           onOpenAuth={() => setIsAuthModalOpen(true)}
+          onOpenGuide={() => setActiveModal('guide')}
+          onShareWhatsApp={handleShareWhatsApp}
         />
         <AuthModal
           isOpen={isAuthModalOpen}
           onClose={() => setIsAuthModalOpen(false)}
           currentUser={currentUser}
+        />
+        <GuideModal
+          isOpen={activeModal === 'guide'}
+          onClose={() => setActiveModal('none')}
         />
       </>
     );
@@ -289,6 +302,8 @@ export default function App() {
         setSoundEnabled={setSoundEnabled}
         onOpenHistory={() => setActiveModal('history')}
         onOpenDatabase={() => setActiveModal('database')}
+        onOpenGuide={() => setActiveModal('guide')}
+        onShareWhatsApp={handleShareWhatsApp}
         onNewDraft={handleNewDraft}
         totalPoints={userStats.totalPoints}
         totalReRollsLeft={reRollsLeft}
@@ -371,6 +386,7 @@ export default function App() {
               placedPlayers={placedPlayers}
               onSimulateMatch={() => setActiveModal('match_sim')}
               onClearSlot={handleClearSlot}
+              onShareWhatsApp={handleShareWhatsApp}
             />
           </div>
         </div>
@@ -434,6 +450,13 @@ export default function App() {
 
       {activeModal === 'database' && (
         <DatabaseModal onClose={() => setActiveModal('none')} />
+      )}
+
+      {activeModal === 'guide' && (
+        <GuideModal
+          isOpen={true}
+          onClose={() => setActiveModal('none')}
+        />
       )}
     </div>
   );

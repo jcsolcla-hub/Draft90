@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { MatchResult, TournamentStage } from '../types';
-import { Trophy, Award, RotateCcw, Share2, BarChart2, ArrowRight } from 'lucide-react';
+import { Trophy, Award, RotateCcw, Share2, BarChart2, ArrowRight, MessageCircle } from 'lucide-react';
 import { sound } from '../utils/audio';
+import { shareTournamentVictoryOnWhatsApp } from '../utils/share';
 
 interface ResultModalProps {
   result: MatchResult;
@@ -197,17 +198,35 @@ export const ResultModal: React.FC<ResultModalProps> = ({
         )}
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-3 border-t border-[#26334d] pt-4">
-          <button
-            onClick={() => {
-              sound.playClick();
-              onOpenCard();
-            }}
-            className="flex items-center justify-center gap-2 bg-[#182234] hover:bg-[#25324d] text-white font-display text-xs font-black py-3 px-4 rounded-xl border border-[#2b3b5c] shadow-md uppercase transition-all"
-          >
-            <Share2 className="w-4 h-4 text-[#ef4444]" />
-            <span>Generar Carta XI</span>
-          </button>
+        <div className="flex flex-col gap-2.5 border-t border-[#26334d] pt-4">
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => {
+                sound.playClick();
+                onOpenCard();
+              }}
+              className="flex items-center justify-center gap-2 bg-[#182234] hover:bg-[#25324d] text-white font-display text-xs font-black py-3 px-4 rounded-xl border border-[#2b3b5c] shadow-md uppercase transition-all cursor-pointer"
+            >
+              <Share2 className="w-4 h-4 text-[#ef4444]" />
+              <span>Generar Carta XI</span>
+            </button>
+
+            <button
+              onClick={() => {
+                sound.playClick();
+                shareTournamentVictoryOnWhatsApp(
+                  'Mi 11 Histórico',
+                  Math.round(result.pointsEarned ? 88 : 84),
+                  `${result.userScore} - ${result.oppScore}`,
+                  result.oppTeam.name
+                );
+              }}
+              className="flex items-center justify-center gap-2 bg-emerald-700/90 hover:bg-emerald-600 text-white font-display text-xs font-black py-3 px-4 rounded-xl border border-emerald-500/50 shadow-md uppercase transition-all cursor-pointer"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>Compartir WhatsApp</span>
+            </button>
+          </div>
 
           {result.won && !isFinal && onNextRound ? (
             <button
@@ -215,7 +234,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
                 sound.playWhistle();
                 onNextRound();
               }}
-              className="flex items-center justify-center gap-2 bg-[#ef4444] hover:bg-red-600 text-white font-display text-xs font-black py-3 px-4 rounded-xl border border-white shadow-lg uppercase transition-all animate-pulse"
+              className="w-full flex items-center justify-center gap-2 bg-[#ef4444] hover:bg-red-600 text-white font-display text-xs font-black py-3 px-4 rounded-xl border border-white shadow-lg uppercase transition-all animate-pulse cursor-pointer"
             >
               <span>
                 {result.roundStage === 'octavos'
@@ -232,7 +251,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
                 sound.playClick();
                 onNewDraft();
               }}
-              className="flex items-center justify-center gap-2 bg-[#ef4444] hover:bg-red-600 text-white font-display text-xs font-black py-3 px-4 rounded-xl border border-white shadow-lg uppercase transition-all"
+              className="w-full flex items-center justify-center gap-2 bg-[#ef4444] hover:bg-red-600 text-white font-display text-xs font-black py-3 px-4 rounded-xl border border-white shadow-lg uppercase transition-all cursor-pointer"
             >
               <RotateCcw className="w-4 h-4" />
               <span>IR AL DRAFT</span>

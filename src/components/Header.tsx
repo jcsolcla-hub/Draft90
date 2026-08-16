@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Volume2, VolumeX, Trophy, Database, RefreshCw, User as UserIcon, LogIn, LogOut } from 'lucide-react';
+import { Volume2, VolumeX, Trophy, Database, RefreshCw, User as UserIcon, LogIn, LogOut, BookOpen, MessageCircle } from 'lucide-react';
 import { sound } from '../utils/audio';
 import { User, logoutUser } from '../lib/firebase';
 
@@ -10,6 +10,8 @@ interface HeaderProps {
   setSoundEnabled: (enabled: boolean) => void;
   onOpenHistory: () => void;
   onOpenDatabase: () => void;
+  onOpenGuide: () => void;
+  onShareWhatsApp: () => void;
   onNewDraft: () => void;
   totalPoints: number;
   totalReRollsLeft: number;
@@ -25,6 +27,8 @@ export const Header: React.FC<HeaderProps> = ({
   setSoundEnabled,
   onOpenHistory,
   onOpenDatabase,
+  onOpenGuide,
+  onShareWhatsApp,
   onNewDraft,
   totalPoints,
   totalReRollsLeft,
@@ -174,6 +178,24 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
           </div>
+
+          <button
+            onClick={() => { sound.playClick(); onOpenGuide(); }}
+            className="flex items-center gap-1.5 bg-[#082b1c] hover:bg-[#0c3d28] text-amber-300 hover:text-amber-200 text-xs font-bold px-3 py-1.5 rounded-lg border border-amber-500/40 transition-all cursor-pointer shadow-sm"
+            title="Guía oficial de juego y reglas"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline">Guía</span>
+          </button>
+
+          <button
+            onClick={() => { sound.playClick(); onShareWhatsApp(); }}
+            className="flex items-center gap-1.5 bg-emerald-700/80 hover:bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-emerald-500/50 transition-all cursor-pointer shadow-sm"
+            title="Compartir plantilla en WhatsApp"
+          >
+            <MessageCircle className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">WhatsApp</span>
+          </button>
 
           <button
             onClick={() => { sound.playClick(); onNewDraft(); }}
