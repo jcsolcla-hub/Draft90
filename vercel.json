@@ -1,0 +1,23 @@
+{
+  "headers": [
+    {
+      "source": "/ads.txt",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/ads.txt",
+      "destination": "/ads.txt"
+    },
+    {
+      "source": "/((?!ads\\.txt|favicon\\..*|assets/).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
